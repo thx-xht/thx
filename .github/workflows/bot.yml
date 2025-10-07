@@ -1,0 +1,67 @@
+name: Run Bot
+
+on:
+  schedule:
+    - cron: '0 9,21 * * *'  # 9 AM and 9 PM daily
+  workflow_dispatch:  # manual testing
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
+      BSKY_APP_PASSWORD: ${{ secrets.BSKY_APP_PASSWORD }}
+    
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          path: main
+          
+      - name: Checkout bot-state branch
+        uses: actions/checkout@v4
+        with:
+          ref: bot-state
+          path: state
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: pip install atproto
+        
+      - name: Create .bot directory if it doesn't exist
+        run: mkdir -p main/.bot
+        
+      - name: Copy state files to main
+        run: |
+          if [ -f state/.bot/index.txt ]; then
+            cp state/.bot/index.txt main/.bot/index.txt
+          else
+            echo "0" > main/.bot/index.txt
+          fi
+          
+      - name: Run bot
+        run: python bot.py
+        working-directory: main
+        
+      - name: Copy updated state back
+        run: cp main/.bot/index.txt state/.bot/index.txt
+        
+      - name: Commit and push state changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add .bot/index.txt
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: advance post index to $(cat .bot/index.txt)"
+            git push
+          fi
+        working-directory: state
