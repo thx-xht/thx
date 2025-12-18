@@ -1,8 +1,8 @@
 name: Run Bot
 
 on:
-  #schedule:
-  #  - cron: '0 9,21 * * *'  # 9 AM and 9 PM daily
+  schedule:
+    - cron: '0 9,21 * * *'  # 9 AM and 9 PM UTC daily
   workflow_dispatch:  # manual testing
 
 permissions:
