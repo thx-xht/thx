@@ -2,7 +2,7 @@ name: Run Bot
 
 on:
   schedule:
-    - cron: '30 7,19 * * *'  # UTC daily => ca 10:00 Berlin
+    - cron: '00 7,19 * * *'  # UTC daily => ca 10:00 Berlin
   workflow_dispatch:  # manual testing
 
 permissions:
